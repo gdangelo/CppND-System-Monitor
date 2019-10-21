@@ -6,6 +6,8 @@
 
 #include "linux_parser.h"
 
+using std::stoi;
+using std::stol;
 using std::stof;
 using std::string;
 using std::to_string;
@@ -67,8 +69,26 @@ vector<int> LinuxParser::Pids() {
   return pids;
 }
 
-// TODO: Read and return the system memory utilization
-float LinuxParser::MemoryUtilization() { return 0.0; }
+// Read and return the system memory utilization
+float LinuxParser::MemoryUtilization() { 
+  string key, value, line;
+  float memTotal = 0.0, memFree = 0.0;
+  std::ifstream stream(kProcDirectory + kMeminfoFilename);
+  if (stream.is_open()) {
+    while (std::getline(stream, line)) {
+      std::istringstream linestream(line);
+      linestream >> key >> value;
+      if (key == "MemTotal:") {
+        memTotal = stof(value);
+      }
+      if (key == "MemFree:") {
+        memFree = stof(value);
+      }
+    }
+    return (memTotal - memFree) / memTotal;
+  }
+  return 0.0; 
+}
 
 // Read and return the system uptime
 long LinuxParser::UpTime() { 
@@ -78,7 +98,7 @@ long LinuxParser::UpTime() {
     std::getline(stream, line);
     std::istringstream linestream(line);
     linestream >> uptime;
-    return std::stol(uptime);
+    return stol(uptime);
   }
   return 0; 
 }
@@ -119,7 +139,7 @@ string LinuxParser::GetValueFromProcStat(string keyToFind) {
 int LinuxParser::TotalProcesses() { 
   string value = LinuxParser::GetValueFromProcStat("processes");
   if (value != "") {
-    return std::stoi(value);
+    return stoi(value);
   }
   return 0;
 }
@@ -128,7 +148,7 @@ int LinuxParser::TotalProcesses() {
 int LinuxParser::RunningProcesses() {
   string value = LinuxParser::GetValueFromProcStat("procs_running");
   if (value != "") {
-    return std::stoi(value);
+    return stoi(value);
   }
   return 0;
 }
