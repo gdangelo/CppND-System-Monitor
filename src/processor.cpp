@@ -1,6 +1,6 @@
 #include "processor.h"
 #include "linux_parser.h"
-#include <unistd.h> // for usleep
+#include <unistd.h>
 
 // Return the aggregate CPU utilization
 float Processor::Utilization() { 
@@ -14,6 +14,10 @@ float Processor::Utilization() {
   
   long totalDelta = totalJiffiesEnd - totalJiffiesStart;
   long activeDelta = activeJiffiesEnd - activeJiffiesStart;
+  
+  if (totalDelta == 0) {
+    return 0.0;
+  }
   
   return float(activeDelta) / float(totalDelta); 
 }

@@ -3,6 +3,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <unistd.h>
 
 #include "process.h"
 #include "linux_parser.h"
@@ -14,8 +15,25 @@ using std::vector;
 // Return this process's ID
 int Process::Pid() { return pid_; }
 
-// TODO: Return this process's CPU utilization
-float Process::CpuUtilization() { return 0; }
+// Return this process's CPU utilization
+float Process::CpuUtilization() { 
+  upTimeStart = LinuxParser::UpTime(pid_);
+  activeJiffiesStart = LinuxParser::ActiveJiffies(pid_);
+  
+  usleep(100000); // microseconds --> 100 milliseconds
+  
+  upTimeEnd = LinuxParser::UpTime(pid_);
+  activeJiffiesEnd = LinuxParser::ActiveJiffies(pid_);
+  
+  long upTimeDelta = upTimeEnd - upTimeStart;
+  long activeDelta = activeJiffiesEnd - activeJiffiesStart;
+  
+  if (upTimeDelta == 0) {
+    return 0.0;
+  }
+  
+  return float(activeDelta) / float(upTimeDelta); 
+}
 
 // Return the command that generated this process
 string Process::Command() { return LinuxParser::Command(pid_); }
