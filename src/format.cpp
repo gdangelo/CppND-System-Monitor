@@ -9,6 +9,7 @@ using std::to_string;
 // OUTPUT: HH:MM:SS
 string Format::ElapsedTime(long seconds) { 
   int ss, mm, hh;
+  string time;
   
   // Compute hours
   hh = seconds / 3600;
@@ -18,5 +19,15 @@ string Format::ElapsedTime(long seconds) {
   // Compute seconds
   ss = seconds % 60;
   
-  return to_string(hh) + ":" + to_string(mm) + ":" + to_string(ss); 
+  // Format time string
+  if (hh < 10) { time = "0"; }
+  time += to_string(hh) + ":";
+  
+  if (mm < 10) { time += "0"; }
+  time += to_string(mm) + ":";
+  
+  if (ss < 10) { time += "0"; }
+  time += to_string(ss);
+  
+  return time; 
 }

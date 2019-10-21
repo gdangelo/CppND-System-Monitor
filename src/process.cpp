@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <unistd.h>
+#include <iostream>
 
 #include "process.h"
 #include "linux_parser.h"
@@ -23,22 +24,13 @@ int Process::Pid() { return pid_; }
 
 // Return this process's CPU utilization
 float Process::CpuUtilization() { 
-  long upTimeStart = LinuxParser::UpTime(pid_);
-  long activeJiffiesStart = LinuxParser::ActiveJiffies(pid_);
+  long totalTime = LinuxParser::ActiveJiffies(pid_);
+  long startTime = LinuxParser::UpTime(pid_);
+  long upTime = LinuxParser::UpTime();
   
-  usleep(100000); // microseconds --> 100 milliseconds
-  
-  long upTimeEnd = LinuxParser::UpTime(pid_);
-  long activeJiffiesEnd = LinuxParser::ActiveJiffies(pid_);
-  
-  long upTimeDelta = upTimeEnd - upTimeStart;
-  long activeDelta = activeJiffiesEnd - activeJiffiesStart;
-  
-  if (upTimeDelta == 0) {
-    return 0.0;
-  }
-  
-  return float(activeDelta) / float(upTimeDelta); 
+  long seconds = upTime - (startTime / sysconf(_SC_CLK_TCK));
+    
+  return (totalTime / sysconf(_SC_CLK_TCK)) / seconds;
 }
 
 // Return the command that generated this process
