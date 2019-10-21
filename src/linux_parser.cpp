@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <iomanip>
 
 #include "linux_parser.h"
 
@@ -108,7 +109,7 @@ long LinuxParser::Jiffies() {
   long total = 0;
   vector<string> cpuUtilization = LinuxParser::CpuUtilization();
   for(int i = kUser_; i <= kSteal_; i++) {
-    total += cpuUtilization[i];
+    total += stol(cpuUtilization[i]);
   }
   return total; 
 }
@@ -136,12 +137,14 @@ long LinuxParser::IdleJiffies() {
 vector<string> LinuxParser::CpuUtilization() { 
   string value, line;
   vector<string> cpuValues;
-  std::ifstream filestream(kProcDirectory + kStatFilename);
+  std::ifstream stream(kProcDirectory + kStatFilename);
   if (stream.is_open()) {
     std::getline(stream, line);
-    linestream >> value;
-    if (value != "cpu") {
-      cpuValues.push_back(cpuValues);
+    std::istringstream linestream(line);
+    while (linestream >> value) {
+      if (value != "cpu") {
+        cpuValues.push_back(value);
+      }
     }
   }
   return cpuValues;
@@ -181,22 +184,82 @@ int LinuxParser::RunningProcesses() {
   return 0;
 }
 
-// TODO: Read and return the command associated with a process
-// REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Command(int pid[[maybe_unused]]) { return string(); }
+// Read and return the command associated with a process
+string LinuxParser::Command(int pid) { 
+  string cmd;
+  std::ifstream stream(kProcDirectory + to_string(pid) + kCmdlineFilename);
+  if (stream.is_open()) {
+    std::getline(stream, cmd);
+    return cmd;
+  }
+  return string();
+}
 
-// TODO: Read and return the memory used by a process
-// REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Ram(int pid[[maybe_unused]]) { return string(); }
+// Read and return the memory used by a process
+string LinuxParser::Ram(int pid) { 
+  string line, key, value;
+  std::stringstream ram;
+  std::ifstream stream(kProcDirectory + to_string(pid) + kStatusFilename);
+  if (stream.is_open()) {
+    while (std::getline(stream, line)) {
+      std::istringstream linestream(line);
+      linestream >> key >> value;
+      if (key == "VmSize:") {
+       ram << std::fixed << std::setprecision(3) << stof(value) / 1000; 
+       return ram;
+      }
+    }
+  }
+  return string();
+}
 
-// TODO: Read and return the user ID associated with a process
-// REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Uid(int pid[[maybe_unused]]) { return string(); }
+// Read and return the user ID associated with a process
+string LinuxParser::Uid(int pid) { 
+  string line, key, value;
+  std::ifstream stream(kProcDirectory + to_string(pid) + kStatusFilename);
+  if (stream.is_open()) {
+    while (std::getline(stream, line)) {
+      std::istringstream linestream(line);
+      linestream >> key >> value;
+      if (key == 'Uid:') {
+        return value;
+      }
+    }
+  }
+  return string();
+}
 
-// TODO: Read and return the user associated with a process
-// REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::User(int pid[[maybe_unused]]) { return string(); }
+// Read and return the user associated with a process
+string LinuxParser::User(int pid) { 
+  string uid = LinuxParser::Uid(pid);
+  string line, key, _, value;
+  std::ifstream stream(kPasswordPath);
+  if (stream.is_open()) {
+   while (std::getline(stream, line, ':')) {
+     std::istringstream linestream(line);
+     linestream >> key >> _ >> value;
+     if (value == uid) {
+       return key;
+     }
+   }
+  }
+  return string();
+}
 
-// TODO: Read and return the uptime of a process
-// REMOVE: [[maybe_unused]] once you define the function
-long LinuxParser::UpTime(int pid[[maybe_unused]]) { return 0; }
+// Read and return the uptime of a process
+long LinuxParser::UpTime(int pid) { 
+  string line, value;
+  std::ifstream stream(kProcDirectory + to_string(pid) + kStatFilename);
+  if (stream.is_open()) {
+    std::getline(stream, line);
+    std::istringstream linestream(line);
+	int i = 0;
+    while (linestream >> value) {
+      if (i == 21) {
+        return stol(value) / sysconf(_SC_CLK_TCK);
+      }
+      i++;
+    }
+  }
+  return 0;
+}
