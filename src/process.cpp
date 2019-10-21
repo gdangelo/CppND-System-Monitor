@@ -13,7 +13,7 @@ using std::to_string;
 using std::vector;
 
 // Constructor 
-Process:Process(pid) {
+Process::Process(int pid) {
   Process::pid_ = pid;
 }
 
@@ -22,13 +22,13 @@ int Process::Pid() { return pid_; }
 
 // Return this process's CPU utilization
 float Process::CpuUtilization() { 
-  upTimeStart = LinuxParser::UpTime(pid_);
-  activeJiffiesStart = LinuxParser::ActiveJiffies(pid_);
+  long upTimeStart = LinuxParser::UpTime(pid_);
+  long activeJiffiesStart = LinuxParser::ActiveJiffies(pid_);
   
   usleep(100000); // microseconds --> 100 milliseconds
   
-  upTimeEnd = LinuxParser::UpTime(pid_);
-  activeJiffiesEnd = LinuxParser::ActiveJiffies(pid_);
+  long upTimeEnd = LinuxParser::UpTime(pid_);
+  long activeJiffiesEnd = LinuxParser::ActiveJiffies(pid_);
   
   long upTimeDelta = upTimeEnd - upTimeStart;
   long activeDelta = activeJiffiesEnd - activeJiffiesStart;
@@ -47,10 +47,10 @@ string Process::Command() { return LinuxParser::Command(pid_); }
 string Process::Ram() { return LinuxParser::Ram(pid_); }
 
 // Return the user (name) that generated this process
-string Process::User() { return LinuxParser::User(_pid); }
+string Process::User() { return LinuxParser::User(pid_); }
 
 // Return the age of this process (in seconds)
-long int Process::UpTime() { return LinuxParser::UpTime(_pid); }
+long int Process::UpTime() { return LinuxParser::UpTime(pid_); }
 
 // TODO: Overload the "less than" comparison operator for Process objects
 // REMOVE: [[maybe_unused]] once you define the function
